@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-#define loglevel 3
+extern int loglevel;
 
 #define lerror(fmt, ...) do { if (loglevel >= 0) fprintf(stderr, "\x1b[91mERROR: " fmt "\x1b[m", ##__VA_ARGS__); } while(0)
 #define lwarn(fmt, ...)  do { if (loglevel >= 1) fprintf(stderr, "\x1b[93mWARN: "  fmt "\x1b[m", ##__VA_ARGS__); } while(0)

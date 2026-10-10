@@ -1,4 +1,4 @@
-# nintencemu
+# nintecemu
 
 ## why
 
@@ -48,3 +48,7 @@ todo:
 	- mmc3
 - apu
 - good ui (first one will be a bad one)
+- get it running on a calculator
+	- i will segment window.c entirely so it
+	  is the only thing interacting with the
+	  device io (screen, controller state, etc)

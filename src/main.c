@@ -4,8 +4,10 @@
 #include "cpu.h"
 #include "cart.h"
 
+int loglevel = 3;
+
 int main(int argc, char **argv) {
-	
+
 	if (argc < 2) {
 		fprintf(stderr, "Usage: %s <rom.nes>\n", argv[0]);
 		return 1;
@@ -20,6 +22,8 @@ int main(int argc, char **argv) {
 
 	Bus bus;
 	CPU cpu;
+
+	bus_init(&bus);
 
 	cpu.bus = &bus;
 	bus.cart = cart;

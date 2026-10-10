@@ -97,11 +97,11 @@ int cart_load(Cart *cart, const char *filename) {
 
 
 // todo: replace these to be dynamic with mappers
-uint8_t cart_read(Cart *cart, uint16_t addr) {
+uint8_t cart_read_prg(Cart *cart, uint16_t addr) {
 	return cart->prg_banks[cart->prg_banks_count == 1 ? (addr - 0x8000) & 0x3fff : addr - 0x8000];
 }
 
-void cart_write(Cart *cart, uint16_t addr, uint8_t val) {
+void cart_write_prg(Cart *cart, uint16_t addr, uint8_t val) {
 	(void)cart;
 	(void)addr;
 	(void)val;

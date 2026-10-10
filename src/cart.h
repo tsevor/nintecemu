@@ -36,5 +36,8 @@ typedef struct {
 
 int cart_load(Cart *cart, const char *filename);
 
-uint8_t cart_read(Cart *cart, uint16_t addr);
-void cart_write(Cart *cart, uint16_t addr, uint8_t val);
+uint8_t cart_read_prg(Cart *cart, uint16_t addr);
+void cart_write_prg(Cart *cart, uint16_t addr, uint8_t val);
+
+uint8_t cart_read_chr(Cart *cart, uint16_t addr);
+void cart_write_chr(Cart *cart, uint16_t addr, uint8_t val);

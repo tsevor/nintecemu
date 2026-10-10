@@ -27,7 +27,7 @@ try:
 			cpu_line = input()
 		prev2.append(line)
 		if "cpu: " + line == cpu_line:
-			# print(f"{i:04d} {line}")
+			# print(f"match: {i:04d} {line}")
 			continue
 		print("mismatch in log lines. printing 3 leading + mismatched emu line")
 		print(f"l-2: {prev2[0]}")
@@ -39,3 +39,5 @@ try:
 			break
 except EOFError:
 	print("-- emulator program ended")
+
+print("log finished")

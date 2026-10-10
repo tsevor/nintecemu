@@ -1,5 +1,4 @@
 CC = gcc
-
 CFLAGS = -Wall -Werror -Wextra -O3 -MMD -MP
 TARGET = bin/nintecemu
 
