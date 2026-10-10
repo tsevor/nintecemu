@@ -1,11 +1,15 @@
 CC = gcc
-CFLAGS = -Wall -Werror -Wextra -O3
-TARGET = bin/nintencemu
+
+CFLAGS = -Wall -Werror -Wextra -O3 -MMD -MP
+TARGET = bin/nintecemu
+
+ARGS = "roms/nestest.nes"
 
 SRCS = $(wildcard src/*.c)
 OBJS = $(SRCS:src/%.c=obj/%.o)
+DEPS = $(OBJS:.o=.d)
 
-.PHONY: all clean scratch
+.PHONY: all run clean scratch
 
 all: $(TARGET)
 
@@ -22,8 +26,11 @@ obj/%.o: src/%.c | obj
 bin obj:
 	@mkdir -p $@
 
+run: $(TARGET)
+	./$(TARGET) $(ARGS)
+
 clean:
 	rm -rf bin
-
-scratch: clean
 	rm -rf obj
+
+-include $(DEPS)

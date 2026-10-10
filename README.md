@@ -7,7 +7,7 @@ i'm making another to get myself more familiar
 with object-oriented concepts in c.
 
 i hate c++ but i like classes. the extent to
-which that i like classes it limited to them
+which that i like classes is limited to them
 being structs with implicit functions, so i
 want to practice using structs instead.
 
@@ -24,7 +24,7 @@ future and how it will work is yet undecided
 
 probably this for command line:
 
-`./nintencemu rom.nes`
+`./nintecemu rom.nes`
 
 ## build
 
@@ -37,14 +37,14 @@ then it should just be
 
 ## todo
 
-features yet to be added:
-- everything
-
-features that will be slow to be added after
-it starts working at all:
-- more mappers
-	- mmc3
-- apu
-- good ui (i know that i will make a bad one)
+todo:
+- unofficial opcodes
+- more logging everywhere
+- video output
+- ppu
 - loopy registers maybe (i might do that from
   the start instead of patching it in)
+- mappers
+	- mmc3
+- apu
+- good ui (first one will be a bad one)
