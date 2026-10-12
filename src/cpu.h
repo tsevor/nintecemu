@@ -1,9 +1,11 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
 
 #include "log.h"
 #include "bus.h"
+#include "host.h"
 
 
 typedef struct CPU {

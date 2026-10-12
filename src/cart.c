@@ -1,5 +1,8 @@
 #include "cart.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 int cart_load(Cart *cart, const char *filename) {
 	ldeb1("load_cart: cart=%p filename=\"%s\"\n", cart, filename);
 

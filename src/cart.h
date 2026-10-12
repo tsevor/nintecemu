@@ -1,13 +1,15 @@
 #pragma once
 
 #include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <stddef.h>
 
+#include "host.h"
 #include "log.h"
 
 #define PRG_BANK_SIZE 0x4000
 #define CHR_BANK_SIZE 0x2000
+
+#define TRAINER_SIZE 0x200
 
 typedef struct Bus Bus;
 
@@ -25,10 +27,10 @@ typedef struct {
 
 	int mapper;
 
-	int four_screen;
-	int has_trainer;
-	int battery_backed;
-	int vertical_mirroring;
+	bool four_screen;
+	bool has_trainer;
+	bool battery_backed;
+	bool vertical_mirroring;
 
 	int trainer_size;
 

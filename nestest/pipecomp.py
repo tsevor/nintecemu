@@ -11,6 +11,8 @@ try:
 
 		addr = line[:4].lower()
 		op = line[6:14].lower()
+		# ignore operands because that requires
+		# too much work just to print
 		reg = line[48:62].lower()
 		p = f"p:{int(line[65:67], 16):08b}"
 		sp = line[68:73].lower()

@@ -1,8 +1,11 @@
 #include <stdio.h>
 
 #include "bus.h"
-#include "cpu.h"
 #include "cart.h"
+#include "cpu.h"
+#include "ppu.h"
+#include "apu.h"
+#include "host.h"
 
 int loglevel = 3;
 
@@ -13,23 +16,44 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	Cart *cart = malloc(sizeof(Cart));
+	Cart cart;
 
-	if (cart_load(cart, argv[1])) {
+	if (cart_load(&cart, argv[1])) {
 		fprintf(stderr, "Failed to load cart: %s\n", argv[1]);
 		return 1;
 	}
 
+	int hecode = host_init();
+
+	if (hecode) {
+		fprintf(stderr, "Failed to init host interface: %d\n", hecode);
+		return 1;
+	}
+
+	// declare components
 	Bus bus;
 	CPU cpu;
+	PPU ppu;
+	APU apu;
 
-	bus_init(&bus);
-
+	// connect components
 	cpu.bus = &bus;
-	bus.cart = cart;
 
-	cpu_run(&cpu);
+	bus.cart = &cart;
+	bus.ppu = &ppu;
+	bus.apu = &apu;
 
+	ppu.cart = &cart;
 
-	free(cart);
+	// init components
+	bus_init(&bus);
+	ppu_init(&ppu);
+	apu_init(&apu);
+	cpu_poweron(&cpu);
+
+	while (1) {
+		cpu_run(&cpu);
+		// vblank
+		host_frame();
+	}
 }

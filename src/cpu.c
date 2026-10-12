@@ -125,7 +125,8 @@ uint16_t cpu_oper_addr(CPU *cpu, AddrMode mode, AccessType type) {
 		return addr;
 	default:
 		lerror("cpu_oper_addr: reached default case, mode: %d\n", mode);
-		exit(1);
+		host_exit(1);
+		return 0; // bypass compiler error
 	}
 }
 
@@ -672,6 +673,12 @@ void cpu_op_shx(CPU *cpu, AddrMode mode) {
 	cpu_write(cpu, addr, val);
 }
 
+void cpu_op_shy(CPU *cpu, AddrMode mode) {
+	uint16_t addr = cpu_oper_addr(cpu, mode, WRITE);
+	uint8_t val = cpu->y & ((addr >> 8) + 1);
+	cpu_write(cpu, addr, val);
+}
+
 void cpu_op_slo(CPU *cpu, AddrMode mode) {
 	uint16_t addr = cpu_oper_addr(cpu, mode, RMW);
 	uint8_t val = cpu_read(cpu, addr);
@@ -1004,6 +1011,7 @@ void cpu_op_switch(CPU *cpu, uint8_t opcode) {
 	case 0x0b: cpu_op_anc(cpu, IMM); break;
 	case 0x2b: cpu_op_anc(cpu, IMM); break;
 	case 0x8b: cpu_op_ane(cpu, IMM); break;
+	case 0x6b: cpu_op_arr(cpu, IMM); break;
 	case 0xbb: cpu_op_las(cpu, ABY); break;
 	case 0xab: cpu_op_lxa(cpu, IMM); break;
 	case 0xeb: cpu_op_sbc(cpu, IMM); break;
@@ -1011,11 +1019,12 @@ void cpu_op_switch(CPU *cpu, uint8_t opcode) {
 	case 0x9f: cpu_op_sha(cpu, ABY); break;
 	case 0x93: cpu_op_sha(cpu, INY); break;
 	case 0x9e: cpu_op_shx(cpu, ABY); break;
+	case 0x9c: cpu_op_shy(cpu, ABX); break;
 	case 0x9b: cpu_op_tas(cpu, ABY); break;
 
 	default:
 		lerror("cpu_op_switch: unimplemented opcode: 0x%02x\n", opcode);
-		exit(1);
+		host_exit(1);
 	}
 }
 
@@ -1033,7 +1042,6 @@ void cpu_reset(CPU *cpu) {
 	cpu->sp = 0xfd;
 	cpu->p = 0x24;
 	cpu->pc = cpu_read16(cpu, 0xFFFC);
-	cpu->pc = 0xc000;
 	cpu->jammed = 0;
 	cpu->cycles = 7;
 }
@@ -1045,12 +1053,14 @@ void cpu_step(CPU *cpu) {
 	}
 
 	uint8_t opcode = cpu_read(cpu, cpu->pc++);
+
+	/* // logging for nestest
 	char binp[9] = {0};
 	for (int i = 0; i < 8; i++){
 		binp[7 - i] = (cpu->p >> i) & 1 ? '1' : '0';
 	}
 
-	// if (!(cpu->cycles % 1789773)) // one clock second
+	if (!(cpu->cycles % 1789773)) // one clock second
 	printf(
 		"cpu: %04x %02x a:%02x x:%02x y:%02x p:%s sp:%02x cyc:%ld\n",
 		(uint16_t)(cpu->pc-1),
@@ -1063,12 +1073,16 @@ void cpu_step(CPU *cpu) {
 		cpu->cycles - 1
 	);
 	fflush(stdout);
+	*/
 	cpu_op_switch(cpu, opcode);
 }
 
 void cpu_run(CPU *cpu) {
-	cpu_poweron(cpu);
-	while (1) {
+	// runs until vblank
+	while (true) {
+		uint64_t cycles_before = cpu->cycles;
 		cpu_step(cpu);
+		if (bus_clock(cpu->bus, cpu->cycles - cycles_before))
+			return; // allow main to handle calls
 	}
 }

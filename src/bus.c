@@ -6,6 +6,15 @@ void bus_init(Bus *bus) {
 		bus->memory[i] = 0;
 }
 
+bool bus_clock(Bus *bus, int cycles) {
+	// cpu is master clock / 12
+	// ppu is master clock / 4
+	// apu is master clock / 12
+	// cpu sends in its clock
+	apu_clock(bus->apu, cycles);
+	return ppu_clock(bus->ppu, cycles);
+}
+
 uint8_t bus_read(Bus *bus, uint16_t addr) {
 	if (addr < 0x2000) {
 		bus->open_bus = bus->memory[addr & 0x7ff];

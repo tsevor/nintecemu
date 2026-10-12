@@ -1,21 +1,23 @@
 CC = gcc
-CFLAGS = -Wall -Werror -Wextra -O3 -MMD -MP
-TARGET = bin/nintecemu
+CFLAGS += -Wall -Werror -Wextra -O3 -MMD -MP -flto $(shell pkg-config --cflags gtk4)
+LDFLAGS += $(shell pkg-config --libs gtk4)
 
 ARGS = "roms/nestest.nes"
+
+TARGET = bin/nintecemu
 
 SRCS = $(wildcard src/*.c)
 OBJS = $(SRCS:src/%.c=obj/%.o)
 DEPS = $(OBJS:.o=.d)
 
-.PHONY: all run clean scratch
+.PHONY: all run clean
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS) | bin
 	@mkdir -p bin
 	@mkdir -p obj
-	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET)
+	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET) $(LDFLAGS)
 
 obj/%.o: src/%.c | obj
 	@mkdir -p bin
