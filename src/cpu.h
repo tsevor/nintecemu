@@ -34,6 +34,7 @@ typedef struct CPU {
 
 	uint8_t jammed;
 	uint64_t cycles;
+	uint64_t stall;
 
 	// connected components
 	Bus *bus;

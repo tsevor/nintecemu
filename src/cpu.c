@@ -1062,6 +1062,12 @@ void cpu_step(CPU *cpu) {
 		return;
 	}
 
+	if (cpu->stall) {
+		cpu->cycles += cpu->stall;
+		cpu->stall = 0;
+		return;
+	}
+
 	uint8_t opcode = cpu_read(cpu, cpu->pc++);
 
 	/* // logging for nestest

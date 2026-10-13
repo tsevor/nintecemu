@@ -42,6 +42,8 @@ int main(int argc, char **argv) {
 	};
 	CPU cpu = { .bus = &bus };
 
+	bus.cpu = &cpu;
+
 	// init components
 	bus_init(&bus);
 	ppu_init(&ppu);

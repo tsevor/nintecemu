@@ -99,7 +99,7 @@ void bus_write(Bus *bus, uint16_t addr, uint8_t val) {
 				data[i] = bus_read(bus, start_addr | (i & 0xff));
 			}
 			ppu_oam_dma(bus->ppu, data);
-			// add 513(+1 if odd) cycles to cpu without clocking bus
+			bus->cpu->stall += 513 + (bus->cpu->cycles % 2);
 			break;
 		}
 	case 0x4015:
