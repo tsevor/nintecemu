@@ -10,8 +10,9 @@
 #define NES_HEIGHT 240
 #define MAX_EVENTS 16
 
-struct Host {
-	uint32_t *buffer;
+static struct {
+	uint32_t *buffer_front;
+	uint32_t *buffer_back;
 	uint8_t controller;
 	GtkWidget *window;
 	GtkWidget *canvas;
@@ -21,9 +22,7 @@ struct Host {
 	EmuCtlEvent event_queue[MAX_EVENTS];
 	int event_head;
 	int event_tail;
-};
-
-static Host host = {0};
+} host = {0};
 
 static void push_event(EmuCtlEventType type, void *arg) {
 	int next_tail = (host.event_tail + 1) % MAX_EVENTS;
@@ -102,7 +101,7 @@ static void on_draw(GtkDrawingArea *area, cairo_t *cr, int width, int height, gp
 	cairo_scale(cr, scale, scale);
 
 	cairo_surface_t *surface = cairo_image_surface_create_for_data(
-		(unsigned char *)host.buffer,
+		(unsigned char *)host.buffer_front,
 		CAIRO_FORMAT_ARGB32,
 		NES_WIDTH,
 		NES_HEIGHT,
@@ -126,7 +125,7 @@ static void on_window_close(GtkWindow *win, gpointer data) {
 int host_init() {
 	lhost("gtk: init\n");
 
-	host.buffer = malloc(NES_WIDTH * NES_HEIGHT * sizeof(uint32_t));
+	host.buffer_front = malloc(NES_WIDTH * NES_HEIGHT * sizeof(uint32_t));
 
 	adw_init();
 
@@ -159,34 +158,29 @@ int host_init() {
 void host_frame() {
 	gtk_widget_queue_draw(host.canvas);
 
+	g_usleep(10000); // inaccurate, but close enough for now
+
 	while (g_main_context_pending(NULL)) {
 		g_main_context_iteration(NULL, FALSE);
 	}
 }
 
 void host_exit(int code) {
-	free(host.buffer);
+	free(host.buffer_front);
+	free(host.buffer_back);
 	exit(code);
 }
 
 void host_set_pixel(int x, int y, uint32_t color) {
-	if (x < 0 || x >= NES_WIDTH)
-		return;
-	if (y < 0 || y >= NES_HEIGHT)
-		return;
-	host.buffer[y * NES_WIDTH + x] = color;
+	if (x < 0 || x >= NES_WIDTH) return;
+	if (y < 0 || y >= NES_HEIGHT) return;
+	host.buffer_back[y * NES_WIDTH + x] = color;
 }
 
-void host_set_row(int y, uint32_t *buffer) {
-	if (y < 0 || y >= NES_HEIGHT)
-		return;
-	memcpy(host.buffer + y * NES_WIDTH, buffer, NES_WIDTH * sizeof(uint32_t));
-}
-
-void host_trade_buffer(uint32_t **buffer) {
-	uint32_t *temp = *buffer;
-	*buffer = host.buffer;
-	host.buffer = temp;
+void host_swap_buffer() {
+	uint32_t *temp = host.buffer_back;
+	host.buffer_back = host.buffer_front;
+	host.buffer_front = temp;
 }
 
 void host_send_info(InfoType type, char *str) {

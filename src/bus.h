@@ -6,20 +6,23 @@
 #include "cart.h"
 #include "apu.h"
 #include "ppu.h"
+#include "controller.h"
 
-typedef struct CPU CPU;
 
 typedef struct Bus {
 	uint8_t memory[0x800];
 
 	uint8_t open_bus;
+	uint8_t ppu_open_bus;
 
 	// connected devices
 
 	Cart *cart;
-	CPU *cpu;
 	PPU *ppu;
 	APU *apu;
+
+	Controller *controller1;
+	Controller *controller2;
 } Bus;
 
 void bus_init(Bus *bus);

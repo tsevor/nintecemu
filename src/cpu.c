@@ -1,4 +1,5 @@
 #include "cpu.h"
+#include "bus.h"
 
 typedef enum AddrMode {
 	IMP, // implicit
@@ -533,7 +534,7 @@ void cpu_op_tya(CPU *cpu, AddrMode mode) {
 }
 
 // unofficial opcodes
-//
+
 void cpu_op_alr(CPU *cpu, AddrMode mode) {
 	uint16_t addr = cpu_oper_addr(cpu, mode, READ);
 	uint8_t val = cpu_read(cpu, addr);
@@ -1028,6 +1029,14 @@ void cpu_op_switch(CPU *cpu, uint8_t opcode) {
 	}
 }
 
+void cpu_nmi(CPU *cpu) {
+	cpu_read(cpu, cpu->pc);
+	cpu_read(cpu, cpu->pc);
+	cpu_push16(cpu, cpu->pc);
+	cpu_push(cpu, (cpu->p & ~0x10) | 0x20);
+	cpu->i = 1;
+	cpu->pc = cpu_read16(cpu, 0xfffa);
+}
 
 void cpu_poweron(CPU *cpu) {
 	// accurate poweron vs reset later
@@ -1041,9 +1050,10 @@ void cpu_reset(CPU *cpu) {
 	cpu->y = 0;
 	cpu->sp = 0xfd;
 	cpu->p = 0x24;
-	cpu->pc = cpu_read16(cpu, 0xFFFC);
+	cpu->pc = cpu_read16(cpu, 0xfffc);
 	cpu->jammed = 0;
 	cpu->cycles = 7;
+	bus_clock(cpu->bus, cpu->cycles);
 }
 
 void cpu_step(CPU *cpu) {
@@ -1059,10 +1069,8 @@ void cpu_step(CPU *cpu) {
 	for (int i = 0; i < 8; i++){
 		binp[7 - i] = (cpu->p >> i) & 1 ? '1' : '0';
 	}
-
-	if (!(cpu->cycles % 1789773)) // one clock second
 	printf(
-		"cpu: %04x %02x a:%02x x:%02x y:%02x p:%s sp:%02x cyc:%ld\n",
+		"cpu: %04x %02x a:%02x x:%02x y:%02x p:%s sp:%02x cyc:%ld ppu:%3d,%3d\n",
 		(uint16_t)(cpu->pc-1),
 		opcode,
 		cpu->a,
@@ -1070,10 +1078,11 @@ void cpu_step(CPU *cpu) {
 		cpu->y,
 		binp,
 		cpu->sp,
-		cpu->cycles - 1
+		cpu->cycles - 1,
+		cpu->bus->ppu->scanline,
+		cpu->bus->ppu->dot
 	);
-	fflush(stdout);
-	*/
+	fflush(stdout); */
 	cpu_op_switch(cpu, opcode);
 }
 
@@ -1082,7 +1091,11 @@ void cpu_run(CPU *cpu) {
 	while (true) {
 		uint64_t cycles_before = cpu->cycles;
 		cpu_step(cpu);
-		if (bus_clock(cpu->bus, cpu->cycles - cycles_before))
+		if (cpu->jammed || bus_clock(cpu->bus, cpu->cycles - cycles_before)) {
+			// vblank
+			if (cpu->bus->ppu->ctrl.V)
+				cpu_nmi(cpu);
 			return; // allow main to handle calls
+		}
 	}
 }

@@ -19,7 +19,7 @@ try:
 		ppu = line[74:85].lower() # ignore for now
 		cycles = line[86:].lower()
 
-		line = f"{addr} {op[:2]} {reg} {p} {sp} {cycles}"
+		line = f"{addr} {op[:2]} {reg} {p} {sp} {cycles} {ppu}"
 
 		i += 1
 		prev2.pop(0)

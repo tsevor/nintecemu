@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 int cart_load(Cart *cart, const char *filename) {
-	ldeb1("load_cart: cart=%p filename=\"%s\"\n", cart, filename);
+	linfo("load_cart: filename=\"%s\"\n", filename);
 
 	if (!cart) {
 		lerror("load_cart: passed unallocated cart\n");
@@ -57,13 +57,21 @@ int cart_load(Cart *cart, const char *filename) {
 	cart->battery_backed = (flags6 & 0x02) != 0;
 	cart->vertical_mirroring = (flags6 & 0x01) != 0;
 
+	if (cart->four_screen)
+		cart->mirroring = MIRROR_FOUR_SCREEN;
+	else if (cart->vertical_mirroring)
+		cart->mirroring = MIRROR_VERTICAL;
+	else
+		cart->mirroring = MIRROR_HORIZONTAL;
+
 	cart->ines_version = (flags7 & 0x0c) >> 2;
 
 	if (cart->ines_version == 2) {
-		lerror("load_cart: ines 2.0 not supported\n");
-		fclose(file);
-		return 1;
+		lwarn("load_cart: ines 2.0 not fully supported\n");
 	}
+
+	if (cart->has_trainer)
+		fseek(file, 512, SEEK_CUR);
 
 	cart->prg_banks = malloc(cart->prg_banks_size);
 	read = fread(cart->prg_banks, 1, cart->prg_banks_size, file);
@@ -109,4 +117,24 @@ void cart_write_prg(Cart *cart, uint16_t addr, uint8_t val) {
 	(void)addr;
 	(void)val;
 	// cart->prg_banks[addr - 0x8000] = val;
+}
+
+uint8_t cart_read_chr(Cart *cart, uint16_t addr) {
+	return cart->chr_banks[addr];
+}
+
+void cart_write_chr(Cart *cart, uint16_t addr, uint8_t val) {
+	(void)cart;
+	(void)addr;
+	(void)val;
+	// can't
+}
+
+uint8_t cart_mirror_nt(Cart *cart, int nt_idx) {
+	int lookup[3][4] = {
+		{0, 0, 2, 2}, // HORIZONTAL
+		{0, 1, 0, 1}, // VERTICAL
+		{0, 1, 2, 3}  // FOUR_SCREEN
+	};
+	return lookup[cart->mirroring][nt_idx];
 }

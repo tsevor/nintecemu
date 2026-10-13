@@ -1,8 +1,8 @@
 CC = gcc
-CFLAGS += -Wall -Werror -Wextra -O3 -MMD -MP -flto $(shell pkg-config --cflags gtk4 libadwaita-1)
+CFLAGS += -g -Wall -Werror -Wextra -O3 -MMD -MP -flto $(shell pkg-config --cflags gtk4 libadwaita-1)
 LDFLAGS += $(shell pkg-config --libs gtk4 libadwaita-1)
 
-ARGS = "roms/nestest.nes"
+ARGS = "roms/accuracycoin.nes"
 
 TARGET = bin/nintecemu
 

@@ -11,8 +11,6 @@
 
 #define TRAINER_SIZE 0x200
 
-typedef struct Bus Bus;
-
 typedef struct {
 	uint8_t header[16];
 	int ines_version;
@@ -32,6 +30,12 @@ typedef struct {
 	bool battery_backed;
 	bool vertical_mirroring;
 
+	enum {
+		MIRROR_HORIZONTAL = 0,
+		MIRROR_VERTICAL = 1,
+		MIRROR_FOUR_SCREEN = 2
+	} mirroring;
+
 	int trainer_size;
 
 } Cart;
@@ -43,3 +47,5 @@ void cart_write_prg(Cart *cart, uint16_t addr, uint8_t val);
 
 uint8_t cart_read_chr(Cart *cart, uint16_t addr);
 void cart_write_chr(Cart *cart, uint16_t addr, uint8_t val);
+
+uint8_t cart_mirror_nt(Cart *cart, int nt_idx);

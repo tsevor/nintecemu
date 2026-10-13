@@ -31,19 +31,16 @@ int main(int argc, char **argv) {
 	}
 
 	// declare components
-	Bus bus;
-	CPU cpu;
-	PPU ppu;
+	Controller controller;
+	PPU ppu = { .cart = &cart };
 	APU apu;
-
-	// connect components
-	cpu.bus = &bus;
-
-	bus.cart = &cart;
-	bus.ppu = &ppu;
-	bus.apu = &apu;
-
-	ppu.cart = &cart;
+	Bus bus = {
+		.cart = &cart,
+		.ppu = &ppu,
+		.apu = &apu,
+		.controller1 = &controller,
+	};
+	CPU cpu = { .bus = &bus };
 
 	// init components
 	bus_init(&bus);
@@ -51,16 +48,18 @@ int main(int argc, char **argv) {
 	apu_init(&apu);
 	cpu_poweron(&cpu);
 
+
 	while (1) {
 		cpu_run(&cpu);
 		// vblank
 		host_frame();
+		controller.state.raw = host_get_controller();
 		EmuCtlEvent e;
 		while (host_get_event(&e)) {
 			switch (e.type) {
 			case E_RESET:
 				cpu_reset(&cpu);
-				host_send_info(I_CPU_RESET, "reset cpu");
+				host_send_info(I_INFO, "reset cpu");
 				break;
 			default:
 				break;

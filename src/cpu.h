@@ -45,3 +45,5 @@ void cpu_reset(CPU *cpu);
 
 void cpu_step(CPU *cpu);
 void cpu_run(CPU *cpu);
+
+void cpu_nmi(CPU *cpu);
