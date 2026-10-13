@@ -84,6 +84,18 @@ typedef struct PPU {
 	int scanline;
 	int dot;
 
+	// background shift registers
+	uint16_t bg_shifter_pattern_lo;
+	uint16_t bg_shifter_pattern_hi;
+	uint16_t bg_shifter_attrib_lo;
+	uint16_t bg_shifter_attrib_hi;
+
+	// fetch latches
+	uint8_t bg_next_tile_id;
+	uint8_t bg_next_tile_attr;
+	uint8_t bg_next_tile_lsb;
+	uint8_t bg_next_tile_msb;
+
 	// connected parts
 	Cart *cart;
 } PPU;

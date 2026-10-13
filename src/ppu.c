@@ -189,13 +189,141 @@ void ppu_write(PPU *ppu, uint8_t val) {
 }
 
 void ppu_draw_dot(PPU *ppu) {
-	if (ppu->scanline < 240 || ppu->scanline >= 240) return;
+	// going for readability here
+	// leaning heavy on compiler optimizations
+
+	if (ppu->scanline < 0 || ppu->scanline >= 240) return;
 	if (ppu->dot < 1 || ppu->dot > 256) return;
 	uint8_t x = ppu->dot - 1;
 	uint8_t y = ppu->scanline;
 
-	(void)x;
-	(void)y;
+	uint8_t bg_palette = 0;
+	uint16_t bg_pixel = 0;
+
+	// background
+	if (ppu->mask.b && (x >= 8 || ppu->mask.m)) {
+		// get tile id
+		uint16_t scroll_x = (ppu->v.coarse_x << 3) | ppu->x;
+		uint16_t scroll_y = (ppu->v.coarse_y << 3) | ppu->v.fine_y;
+
+		uint16_t eff_x = scroll_x + x;
+		uint16_t eff_y = scroll_y + y;
+
+		uint16_t nt_x = ppu->v.nametable_x ^ (eff_x >= 256);
+		uint16_t nt_y = ppu->v.nametable_y ^ (eff_y >= 240);
+
+		eff_x &= 0xff;
+		if (eff_y >= 240) eff_y -= 240;
+
+		uint8_t tile_x = eff_x >> 3;
+		uint8_t tile_y = eff_y >> 3;
+
+		uint16_t nt_base = 0x2000 | (nt_y << 11) | (nt_x << 10);
+		uint16_t nt_addr = nt_base | (tile_y << 5) | tile_x;
+
+		uint8_t tile_id = ppu_read_nt(ppu, nt_addr);
+
+		// get palette
+		uint8_t attr_group_x = tile_x >> 2;
+		uint8_t attr_group_y = tile_y >> 2;
+		uint16_t attr_addr = nt_base | 0x03c0 | (attr_group_y << 3) | attr_group_x;
+		uint8_t attr_byte = ppu_read_nt(ppu, attr_addr);
+
+		uint8_t pal_group_x = (tile_x >> 1) & 1;
+		uint8_t pal_group_y = (tile_y >> 1) & 1;
+		uint8_t shamt = (pal_group_y << 2) | (pal_group_x << 1);
+
+		bg_palette = (attr_byte >> shamt) & 0x03;
+
+		// get chr-rom data
+		uint16_t rom_addr = (ppu->ctrl.B << 12) | (tile_id << 4) | (eff_y & 7);
+		uint16_t tile_low = cart_read_chr(ppu->cart, rom_addr);
+		uint16_t tile_high = cart_read_chr(ppu->cart, rom_addr + 8);
+		shamt = 7 - (eff_x & 7);
+		bg_pixel = (((tile_high >> shamt) & 1) << 1) | ((tile_low >> shamt) & 1);
+	}
+
+	uint8_t spr_pixel = 0;
+	uint8_t spr_palette = 0;
+	bool spr_priority = false;
+	bool sprite_zero = false;
+
+	// sprites
+	if (ppu->mask.s && (x >= 8 || ppu->mask.M)) {
+		int sprite_height = ppu->ctrl.H ? 16 : 8;
+
+		for (int i = 0; i < 64; i++) {
+			uint8_t sy = ppu->oam.sprites[i].y;
+			uint8_t tile = ppu->oam.sprites[i].tileIdx;
+			uint8_t attr = ppu->oam.sprites[i].attr;
+			uint8_t sx = ppu->oam.sprites[i].x;
+
+			sy = sy + 1; // 1 scanline delay
+			if (sy == 0 || sy >= 240) continue;
+
+			int diff_x = x - sx;
+			int diff_y = y - sy;
+
+			if (diff_x < 0 || diff_x >= 8) continue;
+			if (diff_y < 0 || diff_y >= sprite_height) continue;
+
+			if (attr & 0x80) // vertical flip
+				diff_y = (sprite_height - 1) - diff_y;
+
+			if (attr & 0x40) // horizontal flip
+				diff_x = 7 - diff_x;
+
+			uint16_t pattern_addr;
+			if (sprite_height == 8) { // 8x8 sprites
+				pattern_addr = (ppu->ctrl.S << 12) | (tile << 4) | diff_y;
+			} else { // 8x16 sprites
+				uint16_t bank = (tile & 1) << 12;
+				uint8_t real_tile = (tile & 0xfe) | (diff_y >= 8);
+				pattern_addr = bank | (real_tile << 4) | (diff_y >> 3);
+			}
+			uint8_t pattern_low = cart_read_chr(ppu->cart, pattern_addr);
+			uint8_t pattern_high = cart_read_chr(ppu->cart, pattern_addr + 8);
+			uint8_t shamt = 7 - diff_x;
+			spr_pixel = (((pattern_high >> shamt) & 1) << 1) | ((pattern_low >> shamt) & 1);
+
+			if (spr_pixel != 0) {
+				spr_palette = (attr & 0x03) + 4; // palettes 4-7
+				spr_priority = (attr & 0x20) == 0;
+				if (i == 0) sprite_zero = true;
+				break;
+			}
+		}
+	}
+
+	uint8_t final_pixel = 0;
+	uint8_t final_palette = 0;
+
+	if (!spr_pixel) { // only bg (or neither)
+		final_pixel = bg_pixel;
+		final_palette = bg_palette;
+	} else if (bg_pixel) { // both
+		if (sprite_zero && x != 255)
+			ppu->stat.S = 1;
+		if (spr_priority) {
+			final_pixel = spr_pixel;
+			final_palette = spr_palette;
+		} else {
+			final_pixel = bg_pixel;
+			final_palette = bg_palette;
+		}
+	} else { // only sprite
+		final_pixel = spr_pixel;
+		final_palette = spr_palette;
+	}
+
+	uint16_t palette_addr = 0;
+	if (final_pixel != 0) {
+		palette_addr = (final_palette << 2) | final_pixel;
+	}
+	uint8_t palette_idx = ppu->pram[palette_addr & 0x1f];
+	uint32_t final_color = 0xff000000 | palette[palette_idx & 0x3f];
+
+	host_set_pixel(x, y, final_color);
 }
 
 

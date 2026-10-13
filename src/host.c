@@ -22,6 +22,8 @@ static struct {
 	EmuCtlEvent event_queue[MAX_EVENTS];
 	int event_head;
 	int event_tail;
+
+	uint64_t last_time;
 } host = {0};
 
 static void push_event(EmuCtlEventType type, void *arg) {
@@ -126,6 +128,7 @@ int host_init() {
 	lhost("gtk: init\n");
 
 	host.buffer_front = malloc(NES_WIDTH * NES_HEIGHT * sizeof(uint32_t));
+	host.buffer_back = malloc(NES_WIDTH * NES_HEIGHT * sizeof(uint32_t));
 
 	adw_init();
 
@@ -152,13 +155,17 @@ int host_init() {
 
 	gtk_window_present(GTK_WINDOW(host.window));
 
+	host.last_time = g_get_real_time();
+
 	return 0;
 }
 
 void host_frame() {
 	gtk_widget_queue_draw(host.canvas);
 
-	g_usleep(10000); // inaccurate, but close enough for now
+	int sleep_time = (1000000 / 60) - (g_get_real_time() - host.last_time);
+	g_usleep(sleep_time);
+	host.last_time = g_get_real_time();
 
 	while (g_main_context_pending(NULL)) {
 		g_main_context_iteration(NULL, FALSE);
