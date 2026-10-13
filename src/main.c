@@ -55,5 +55,16 @@ int main(int argc, char **argv) {
 		cpu_run(&cpu);
 		// vblank
 		host_frame();
+		EmuCtlEvent e;
+		while (host_get_event(&e)) {
+			switch (e.type) {
+			case E_RESET:
+				cpu_reset(&cpu);
+				host_send_info(I_CPU_RESET, "reset cpu");
+				break;
+			default:
+				break;
+			}
+		}
 	}
 }
