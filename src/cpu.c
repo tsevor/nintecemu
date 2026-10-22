@@ -20,9 +20,22 @@ typedef enum AddrMode {
 typedef enum AccessType {
 	READ,
 	WRITE,
-	RMW
+	RMW,
 } AccessType;
 
+typedef enum InterruptVector {
+	NMI,
+	RESET,
+	IRQ,
+	BRK,
+} InterruptVector;
+
+static const uint16_t INTERRUPT_VECTORS[4] = {
+	[NMI] = 0xfffa,
+	[RESET] = 0xfffc,
+	[IRQ] = 0xfffe,
+	[BRK] = 0xfffe,
+};
 
 uint8_t cpu_read(CPU *cpu, uint16_t addr) {
 	cpu->cycles++;
@@ -146,6 +159,23 @@ void cpu_branch(CPU *cpu, AddrMode mode, int condition) {
 	}
 }
 
+void cpu_interrupt(CPU *cpu, InterruptVector vec) {
+	cpu_read(cpu, cpu->pc);
+	cpu_read(cpu, cpu->pc);
+	if (vec != RESET) {
+		cpu_push16(cpu, cpu->pc);
+		uint8_t b_flag = (vec == BRK) ? 0x10 : 0x00;
+		cpu_push(cpu, (cpu->p & ~0x10) | 0x20 | b_flag);
+	} else {
+		// dummy stack "pushes"
+		cpu_read(cpu, 0x0100 | cpu->sp--);
+		cpu_read(cpu, 0x0100 | cpu->sp--);
+		cpu_read(cpu, 0x0100 | cpu->sp--);
+	}
+	cpu->i = 1;
+	cpu->pc = cpu_read16(cpu, INTERRUPT_VECTORS[vec]);
+}
+
 // official opcodes
 
 void cpu_op_adc(CPU *cpu, AddrMode mode) {
@@ -215,11 +245,7 @@ void cpu_op_bpl(CPU *cpu, AddrMode mode) {
 
 void cpu_op_brk(CPU *cpu, AddrMode mode) {
 	(void)mode;
-	cpu_read(cpu, cpu->pc++);
-	cpu_push16(cpu, cpu->pc);
-	cpu_push(cpu, cpu->p | 0x30);
-	cpu->i = 1;
-	cpu->pc = cpu_read16(cpu, 0xfffe);
+	cpu_interrupt(cpu, BRK);
 }
 
 void cpu_op_bvc(CPU *cpu, AddrMode mode) {
@@ -1029,31 +1055,29 @@ void cpu_op_switch(CPU *cpu, uint8_t opcode) {
 	}
 }
 
-void cpu_nmi(CPU *cpu) {
-	cpu_read(cpu, cpu->pc);
-	cpu_read(cpu, cpu->pc);
-	cpu_push16(cpu, cpu->pc);
-	cpu_push(cpu, (cpu->p & ~0x10) | 0x20);
-	cpu->i = 1;
-	cpu->pc = cpu_read16(cpu, 0xfffa);
-}
-
 void cpu_poweron(CPU *cpu) {
-	// accurate poweron vs reset later
+	linfo("poweron cpu\n");
+	cpu->a = 0;
+	cpu->x = 0;
+	cpu->y = 0;
+	cpu->sp = 0xff;
+	cpu->p = 0x24;
+	cpu->jammed = 0;
+	cpu->cycles = 0;
 	cpu_reset(cpu);
 }
 
 void cpu_reset(CPU *cpu) {
 	linfo("reset cpu\n");
-	cpu->a = 0;
-	cpu->x = 0;
-	cpu->y = 0;
-	cpu->sp = 0xfd;
-	cpu->p = 0x24;
-	cpu->pc = cpu_read16(cpu, 0xfffc);
-	cpu->jammed = 0;
-	cpu->cycles = 7;
-	bus_clock(cpu->bus, cpu->cycles);
+	cpu_interrupt(cpu, RESET);
+}
+
+void cpu_nmi(CPU *cpu) {
+	cpu_interrupt(cpu, NMI);
+}
+
+void cpu_irq(CPU *cpu) {
+	cpu_interrupt(cpu, IRQ);
 }
 
 void cpu_step(CPU *cpu) {

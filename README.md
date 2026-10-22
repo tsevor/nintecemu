@@ -19,36 +19,33 @@ a snes emulator
 
 ## use
 
-i have made zero progress so ui/args is in the
-future and how it will work is yet undecided
-
-probably this for command line:
+i have made zero progress on ui so use args:
 
 `./nintecemu rom.nes`
 
 ## build
 
-requirements
-- sdl3
+requirements for pc host
+- gtk
+- libadwaita
 
-then it should just be
+then run:
 
 `make`
+
+or use
+
+`make run ARGS="path/to/rom.nes"`
 
 ## todo
 
 todo:
-- unofficial opcodes
 - more logging everywhere
-- video output
-- ppu
-- loopy registers maybe (i might do that from
-  the start instead of patching it in)
 - mappers
 	- mmc3
 - apu
 - good ui (first one will be a bad one)
 - get it running on a calculator
-	- i will segment window.c entirely so it
+	- i will segment host.c entirely so it
 	  is the only thing interacting with the
 	  device io (screen, controller state, etc)

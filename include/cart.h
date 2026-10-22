@@ -11,6 +11,12 @@
 
 #define TRAINER_SIZE 0x200
 
+typedef enum MirrorType {
+	MIRROR_HORIZONTAL,
+	MIRROR_VERTICAL,
+	MIRROR_FOUR_SCREEN
+} MirrorType;
+
 typedef struct {
 	uint8_t header[16];
 	int ines_version;
@@ -30,11 +36,7 @@ typedef struct {
 	bool battery_backed;
 	bool vertical_mirroring;
 
-	enum {
-		MIRROR_HORIZONTAL = 0,
-		MIRROR_VERTICAL = 1,
-		MIRROR_FOUR_SCREEN = 2
-	} mirroring;
+	MirrorType mirroring;
 
 	int trainer_size;
 

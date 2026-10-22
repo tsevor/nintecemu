@@ -41,10 +41,11 @@ typedef struct CPU {
 
 } CPU;
 
-void cpu_poweron(CPU *cpu);
+void cpu_nmi(CPU *cpu);
+void cpu_irq(CPU *cpu);
+
 void cpu_reset(CPU *cpu);
+void cpu_poweron(CPU *cpu);
 
 void cpu_step(CPU *cpu);
 void cpu_run(CPU *cpu);
-
-void cpu_nmi(CPU *cpu);

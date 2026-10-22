@@ -131,10 +131,11 @@ void cart_write_chr(Cart *cart, uint16_t addr, uint8_t val) {
 }
 
 uint8_t cart_mirror_nt(Cart *cart, int nt_idx) {
-	int lookup[3][4] = {
-		{0, 0, 2, 2}, // HORIZONTAL
-		{0, 1, 0, 1}, // VERTICAL
-		{0, 1, 2, 3}  // FOUR_SCREEN
+	static const uint8_t lut[3][4] = {
+		// nametable            0  1  2  3
+		[MIRROR_HORIZONTAL]  = {0, 0, 2, 2},
+		[MIRROR_VERTICAL]    = {0, 1, 0, 1},
+		[MIRROR_FOUR_SCREEN] = {0, 1, 2, 3}
 	};
-	return lookup[cart->mirroring][nt_idx];
+	return lut[cart->mirroring][nt_idx];
 }

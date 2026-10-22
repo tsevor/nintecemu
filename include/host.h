@@ -34,6 +34,8 @@ typedef enum InfoType {
 	I_MISC,
 } InfoType;
 
+extern uint32_t *host_screen_buffer;
+
 // called on emulator start
 int host_init();
 
@@ -43,8 +45,7 @@ void host_frame();
 // called on emulator exit
 void host_exit(int code);
 
-// sets display for emulator output
-void host_set_pixel(int x, int y, uint32_t color);
+// swap internal buffer with exposed one
 void host_swap_buffer();
 
 // sends info for host to display

@@ -10,6 +10,8 @@
 #define NES_HEIGHT 240
 #define MAX_EVENTS 16
 
+uint32_t *host_screen_buffer = NULL;
+
 static struct {
 	uint32_t *buffer_front;
 	uint32_t *buffer_back;
@@ -18,6 +20,10 @@ static struct {
 	GtkWidget *canvas;
 	GtkWidget *toast;
 	AdwToast *active_toast;
+
+	struct {
+		bool sprint;
+	} binds;
 
 	EmuCtlEvent event_queue[MAX_EVENTS];
 	int event_head;
@@ -53,8 +59,10 @@ static gboolean on_key_pressed(GtkEventControllerKey *controller, guint keyval, 
 		case GDK_KEY_Down:  host.controller |= BUTTON_DOWN;   break;
 		case GDK_KEY_Left:  host.controller |= BUTTON_LEFT;   break;
 		case GDK_KEY_Right: host.controller |= BUTTON_RIGHT;  break;
-		// emu control
+		// emu control once
 		case GDK_KEY_r: push_event(E_RESET, NULL); break;
+		// emu control held
+		case GDK_KEY_bracketright: host.binds.sprint = true; break;
 		// no key
 		default:
 			return FALSE;
@@ -78,6 +86,8 @@ static gboolean on_key_released(GtkEventControllerKey *controller, guint keyval,
 		case GDK_KEY_Down:  host.controller &= ~BUTTON_DOWN;   break;
 		case GDK_KEY_Left:  host.controller &= ~BUTTON_LEFT;   break;
 		case GDK_KEY_Right: host.controller &= ~BUTTON_RIGHT;  break;
+		// emu control held
+		case GDK_KEY_bracketright: host.binds.sprint = false; break;
 		// no key
 		default:
 			return FALSE;
@@ -129,6 +139,7 @@ int host_init() {
 
 	host.buffer_front = malloc(NES_WIDTH * NES_HEIGHT * sizeof(uint32_t));
 	host.buffer_back = malloc(NES_WIDTH * NES_HEIGHT * sizeof(uint32_t));
+	host_screen_buffer = host.buffer_front;
 
 	adw_init();
 
@@ -164,7 +175,7 @@ void host_frame() {
 	gtk_widget_queue_draw(host.canvas);
 
 	int sleep_time = (1000000 / 60) - (g_get_real_time() - host.last_time);
-	g_usleep(sleep_time);
+	if (!host.binds.sprint) g_usleep(sleep_time);
 	host.last_time = g_get_real_time();
 
 	while (g_main_context_pending(NULL)) {
@@ -188,6 +199,7 @@ void host_swap_buffer() {
 	uint32_t *temp = host.buffer_back;
 	host.buffer_back = host.buffer_front;
 	host.buffer_front = temp;
+	host_screen_buffer = host.buffer_front;
 }
 
 void host_send_info(InfoType type, char *str) {

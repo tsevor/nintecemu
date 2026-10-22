@@ -322,7 +322,7 @@ void ppu_draw_dot(PPU *ppu) {
 	uint8_t palette_idx = ppu->pram[palette_addr & 0x1f];
 	uint32_t final_color = 0xff000000 | palette[palette_idx & 0x3f];
 
-	host_set_pixel(x, y, final_color);
+	host_screen_buffer[y * 256 + x] = final_color;
 }
 
 
