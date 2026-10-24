@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	Cart cart;
+	Cart cart = {0};
 
 	if (cart_load(&cart, argv[1])) {
 		fprintf(stderr, "Failed to load cart: %s\n", argv[1]);
@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
 	}
 
 	// declare components
-	Controller controller;
+	Controller controller = {0};
 	PPU ppu = { .cart = &cart };
 	APU apu;
 	Bus bus = {

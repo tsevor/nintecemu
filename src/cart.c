@@ -47,7 +47,7 @@ int cart_load(Cart *cart, const char *filename) {
 
 	// temporary until mappers are properly implemented
 	if (cart->mapper != 0) {
-		lerror("load_cart: mapper not supported: %d", cart->mapper);
+		lerror("load_cart: mapper not supported: %d\n", cart->mapper);
 		fclose(file);
 		return 1;
 	}
@@ -106,6 +106,13 @@ int cart_load(Cart *cart, const char *filename) {
 	return 0;
 }
 
+void cart_free(Cart *cart) {
+	if (cart->prg_banks) free(cart->prg_banks);
+	if (cart->chr_banks) free(cart->chr_banks);
+	cart->prg_banks = NULL;
+	cart->chr_banks = NULL;
+}
+
 
 // todo: replace these to be dynamic with mappers
 uint8_t cart_read_prg(Cart *cart, uint16_t addr) {
@@ -124,10 +131,9 @@ uint8_t cart_read_chr(Cart *cart, uint16_t addr) {
 }
 
 void cart_write_chr(Cart *cart, uint16_t addr, uint8_t val) {
-	(void)cart;
-	(void)addr;
-	(void)val;
-	// can't
+	if (cart->chr_banks_count == 0) {
+		cart->chr_banks[addr & 0x1fff] = val;
+	}
 }
 
 uint8_t cart_mirror_nt(Cart *cart, int nt_idx) {

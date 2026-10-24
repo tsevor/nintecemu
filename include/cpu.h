@@ -32,7 +32,7 @@ typedef struct CPU {
 
 	// other data
 
-	uint8_t jammed;
+	bool jammed;
 	uint64_t cycles;
 	uint64_t stall;
 

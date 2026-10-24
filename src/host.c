@@ -139,7 +139,7 @@ int host_init() {
 
 	host.buffer_front = malloc(NES_WIDTH * NES_HEIGHT * sizeof(uint32_t));
 	host.buffer_back = malloc(NES_WIDTH * NES_HEIGHT * sizeof(uint32_t));
-	host_screen_buffer = host.buffer_front;
+	host_screen_buffer = host.buffer_back;
 
 	adw_init();
 
@@ -175,7 +175,7 @@ void host_frame() {
 	gtk_widget_queue_draw(host.canvas);
 
 	int sleep_time = (1000000 / 60) - (g_get_real_time() - host.last_time);
-	if (!host.binds.sprint) g_usleep(sleep_time);
+	if (!host.binds.sprint && sleep_time > 0) g_usleep(sleep_time);
 	host.last_time = g_get_real_time();
 
 	while (g_main_context_pending(NULL)) {
@@ -199,7 +199,7 @@ void host_swap_buffer() {
 	uint32_t *temp = host.buffer_back;
 	host.buffer_back = host.buffer_front;
 	host.buffer_front = temp;
-	host_screen_buffer = host.buffer_front;
+	host_screen_buffer = host.buffer_back;
 }
 
 void host_send_info(InfoType type, char *str) {

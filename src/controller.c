@@ -7,7 +7,7 @@ uint8_t controller_read(Controller *ctrl) {
 	} else {
 		ret = 1; // Open bus behavior
 	}
-	if (!ctrl->strobe) {
+	if (!ctrl->strobe && ctrl->read_idx < 8) {
 		ctrl->read_idx++;
 	}
 	return ret;

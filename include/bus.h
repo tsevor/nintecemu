@@ -16,6 +16,10 @@ typedef struct Bus {
 	uint8_t open_bus;
 	uint8_t ppu_open_bus;
 
+
+	// cpu fetch state
+	bool vblank_started;
+
 	// connected devices
 
 	Cart *cart;
@@ -29,7 +33,7 @@ typedef struct Bus {
 
 void bus_init(Bus *bus);
 
-bool bus_clock(Bus *bus, int cycles);
+void bus_clock(Bus *bus);
 
 uint8_t bus_read(Bus *bus, uint16_t addr);
 void bus_write(Bus *bus, uint16_t addr, uint8_t val);

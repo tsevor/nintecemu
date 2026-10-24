@@ -27,7 +27,7 @@ uint32_t palette[64] = {
 };
 
 void ppu_init(PPU *ppu) {
-	for (int i = 0; i < 0x800; i++)
+	for (int i = 0; i < 0x1000; i++)
 		ppu->vram[i] = 0;
 	for (int i = 0; i < 0x20; i++)
 		ppu->pram[i] = 0;
@@ -151,7 +151,7 @@ uint8_t ppu_read(PPU *ppu) {
 		break;
 	}
 
-	ppu->v.raw += (ppu->ctrl.I == 0) ? 1 : 32;
+    ppu->v.raw = (ppu->v.raw + (ppu->ctrl.I ? 32 : 1)) & 0x3fff;
 	return result;
 }
 
@@ -184,7 +184,7 @@ void ppu_write(PPU *ppu, uint8_t val) {
 			break;
 	}
 
-	ppu->v.raw += (ppu->ctrl.I == 0) ? 1 : 32;
+    ppu->v.raw = (ppu->v.raw + (ppu->ctrl.I ? 32 : 1)) & 0x3fff;
 }
 
 void ppu_draw_dot(PPU *ppu) {
@@ -278,7 +278,7 @@ void ppu_draw_dot(PPU *ppu) {
 			} else { // 8x16 sprites
 				uint16_t bank = (tile & 1) << 12;
 				uint8_t real_tile = (tile & 0xfe) | (diff_y >= 8);
-				pattern_addr = bank | (real_tile << 4) | (diff_y >> 3);
+				pattern_addr = bank | (real_tile << 4) | (diff_y & 7);
 			}
 			uint8_t pattern_low = cart_read_chr(ppu->cart, pattern_addr);
 			uint8_t pattern_high = cart_read_chr(ppu->cart, pattern_addr + 8);

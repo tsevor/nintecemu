@@ -39,12 +39,15 @@ static const uint16_t INTERRUPT_VECTORS[4] = {
 
 uint8_t cpu_read(CPU *cpu, uint16_t addr) {
 	cpu->cycles++;
-	return bus_read(cpu->bus, addr);
+	uint8_t val = bus_read(cpu->bus, addr);
+	bus_clock(cpu->bus);
+	return val;
 }
 
 void cpu_write(CPU *cpu, uint16_t addr, uint8_t val) {
 	cpu->cycles++;
 	bus_write(cpu->bus, addr, val);
+	bus_clock(cpu->bus);
 }
 
 uint16_t cpu_read16(CPU *cpu, uint16_t addr) {
@@ -161,16 +164,15 @@ void cpu_branch(CPU *cpu, AddrMode mode, int condition) {
 
 void cpu_interrupt(CPU *cpu, InterruptVector vec) {
 	cpu_read(cpu, cpu->pc);
-	cpu_read(cpu, cpu->pc);
-	if (vec != RESET) {
-		cpu_push16(cpu, cpu->pc);
-		uint8_t b_flag = (vec == BRK) ? 0x10 : 0x00;
-		cpu_push(cpu, (cpu->p & ~0x10) | 0x20 | b_flag);
-	} else {
+	if (vec == RESET) {
 		// dummy stack "pushes"
 		cpu_read(cpu, 0x0100 | cpu->sp--);
 		cpu_read(cpu, 0x0100 | cpu->sp--);
 		cpu_read(cpu, 0x0100 | cpu->sp--);
+	} else {
+		cpu_push16(cpu, cpu->pc);
+		uint8_t b_flag = (vec == BRK) ? 0x10 : 0x00;
+		cpu_push(cpu, (cpu->p & ~0x10) | 0x20 | b_flag);
 	}
 	cpu->i = 1;
 	cpu->pc = cpu_read16(cpu, INTERRUPT_VECTORS[vec]);
@@ -245,6 +247,7 @@ void cpu_op_bpl(CPU *cpu, AddrMode mode) {
 
 void cpu_op_brk(CPU *cpu, AddrMode mode) {
 	(void)mode;
+	cpu->pc++;
 	cpu_interrupt(cpu, BRK);
 }
 
@@ -1060,7 +1063,7 @@ void cpu_poweron(CPU *cpu) {
 	cpu->a = 0;
 	cpu->x = 0;
 	cpu->y = 0;
-	cpu->sp = 0xff;
+	cpu->sp = 0x00;
 	cpu->p = 0x24;
 	cpu->jammed = 0;
 	cpu->cycles = 0;
@@ -1069,6 +1072,8 @@ void cpu_poweron(CPU *cpu) {
 
 void cpu_reset(CPU *cpu) {
 	linfo("reset cpu\n");
+	cpu->jammed = false;
+	cpu->stall = 0;
 	cpu_interrupt(cpu, RESET);
 }
 
@@ -1077,7 +1082,9 @@ void cpu_nmi(CPU *cpu) {
 }
 
 void cpu_irq(CPU *cpu) {
-	cpu_interrupt(cpu, IRQ);
+	if (!cpu->i) {
+		cpu_interrupt(cpu, IRQ);
+	}
 }
 
 void cpu_step(CPU *cpu) {
@@ -1087,8 +1094,10 @@ void cpu_step(CPU *cpu) {
 	}
 
 	if (cpu->stall) {
-		cpu->cycles += cpu->stall;
-		cpu->stall = 0;
+		for (; cpu->stall > 0; cpu->stall--) {
+			cpu->cycles++;
+			bus_clock(cpu->bus);
+		}
 		return;
 	}
 
@@ -1119,9 +1128,9 @@ void cpu_step(CPU *cpu) {
 void cpu_run(CPU *cpu) {
 	// runs until vblank
 	while (true) {
-		uint64_t cycles_before = cpu->cycles;
 		cpu_step(cpu);
-		if (cpu->jammed || bus_clock(cpu->bus, cpu->cycles - cycles_before)) {
+		if (cpu->jammed || cpu->bus->vblank_started) {
+			cpu->bus->vblank_started = false;
 			// vblank
 			if (cpu->bus->ppu->ctrl.V)
 				cpu_nmi(cpu);

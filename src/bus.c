@@ -2,13 +2,16 @@
 #include "log.h"
 
 void bus_init(Bus *bus) {
+	bus->vblank_started = false;
 	for (int i = 0; i < 0x800; i++)
 		bus->memory[i] = 0;
 }
 
-bool bus_clock(Bus *bus, int cycles) {
-	apu_clock(bus->apu, cycles);
-	return ppu_clock(bus->ppu, cycles * 3);
+void bus_clock(Bus *bus) {
+	apu_clock(bus->apu, 1);
+	if (ppu_clock(bus->ppu, 3)) {
+		bus->vblank_started = true;
+	}
 }
 
 uint8_t bus_read(Bus *bus, uint16_t addr) {
@@ -46,7 +49,7 @@ uint8_t bus_read(Bus *bus, uint16_t addr) {
 		break;
 	case 0x4017:
 		if (bus->controller2)
-			bus->open_bus = (controller_read(bus->controller2) & 0x1f) | (bus->open_bus & 0xe0);
+			bus->open_bus = (controller_read(bus->controller2) & ~0x01) | (bus->open_bus & 0x01);
 		break;
 	case 0x8000 ... 0xffff:
 		bus->open_bus = cart_read_prg(bus->cart, addr);
