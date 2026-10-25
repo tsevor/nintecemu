@@ -353,6 +353,9 @@ bool ppu_step(PPU *ppu) {
 	}
 
 	if (ppu->mask.b || ppu->mask.s) {
+		if (ppu->scanline < 240 && ppu->dot == 260) {
+			cart_scanline(ppu->cart);
+		}
 
 		if (ppu->scanline < 240 || ppu->scanline == 261) {
 			if (ppu->dot == 257) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct MapperInterface MapperInterface;
 
@@ -13,6 +14,9 @@ typedef struct MapperInterface {
 	void (*reset)(MapperInterface *mi);
 
 	uint8_t (*mirror_nt)(MapperInterface *mi, int nt_idx);
+
+	bool (*irq_active)(MapperInterface *mi);
+	void (*scanline)(MapperInterface *mi);
 
 	void (*free)(MapperInterface *mi);
 

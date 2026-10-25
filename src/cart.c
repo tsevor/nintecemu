@@ -142,12 +142,23 @@ uint8_t cart_mirror_nt(Cart *cart, int nt_idx) {
 	return cart->mapper.mirror_nt(&cart->mapper, nt_idx);
 }
 
+bool cart_irq_active(Cart *cart) {
+	if (cart->mapper.irq_active)
+		return cart->mapper.irq_active(&cart->mapper);
+	return false;
+}
+
+void cart_scanline(Cart *cart) {
+	if (cart->mapper.scanline)
+		cart->mapper.scanline(&cart->mapper);
+}
+
 bool cart_pick_mapper(Cart *cart) {
 	switch (cart->mapperid) {
 		case 0: // NROM
 			m_NROM_init(&cart->mapper, cart);
 			return true;
-		case 7: // NROM
+		case 7: // AxROM
 			m_AxROM_init(&cart->mapper, cart);
 			return true;
 		default:

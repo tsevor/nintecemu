@@ -1101,6 +1101,11 @@ void cpu_step(CPU *cpu) {
 		return;
 	}
 
+	if (!cpu->i && bus_irq_active(cpu->bus)) {
+		cpu_interrupt(cpu, IRQ);
+		return;
+	}
+
 	uint8_t opcode = cpu_read(cpu, cpu->pc++);
 
 	/* // logging for nestest

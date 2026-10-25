@@ -57,6 +57,8 @@ void cart_write_chr(Cart *cart, uint16_t addr, uint8_t val);
 uint8_t cart_mirror_nt(Cart *cart, int nt_idx);
 
 void cart_reset(Cart *cart);
+bool cart_irq_active(Cart *cart);
+void cart_scanline(Cart *cart);
 
 // include all mappers here
 

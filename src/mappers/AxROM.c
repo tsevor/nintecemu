@@ -24,7 +24,6 @@ uint8_t m_AxROM_read_prg(MapperInterface *mi, uint16_t addr) {
 
 void m_AxROM_write_prg(MapperInterface *mi, uint16_t addr, uint8_t val) {
 	if (addr < 0x8000) return;
-	val &= mstruct->cart->prg_banks[mstruct->prg_offset + (addr & 0x7fff)];
 	uint8_t prg_bank = val & 0x0f;
 	mstruct->prg_offset = (prg_bank << 15) & ((mstruct->cart->prg_banks_count << 14) - 1);
 	mstruct->mirror_page = (val & 0x10) >> 4;

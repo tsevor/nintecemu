@@ -16,7 +16,16 @@ void bus_clock(Bus *bus) {
 
 void bus_reset(Bus *bus) {
 	cart_reset(bus->cart);
+	apu_reset(bus->apu);
 	cpu_reset(bus->cpu);
+}
+
+bool bus_irq_active(Bus *bus) {
+	if (apu_irq_active(bus->apu))
+		return true;
+	if (cart_irq_active(bus->cart))
+		return true;
+	return false;
 }
 
 uint8_t bus_read(Bus *bus, uint16_t addr) {
@@ -50,11 +59,11 @@ uint8_t bus_read(Bus *bus, uint16_t addr) {
 		break;
 	case 0x4016:
 		if (bus->controller1)
-			bus->open_bus = (controller_read(bus->controller1) & 0x1f) | (bus->open_bus & 0xe0);
+			bus->open_bus = (controller_read(bus->controller1) & 0x01) | (bus->open_bus & ~0x01);
 		break;
 	case 0x4017:
 		if (bus->controller2)
-			bus->open_bus = (controller_read(bus->controller2) & ~0x01) | (bus->open_bus & 0x01);
+			bus->open_bus = (controller_read(bus->controller2) & 0x01) | (bus->open_bus & ~0x01);
 		break;
 	case 0x6000 ... 0xffff:
 		bus->open_bus = cart_read_prg(bus->cart, addr);
@@ -111,7 +120,7 @@ void bus_write(Bus *bus, uint16_t addr, uint8_t val) {
 			break;
 		}
 	case 0x4015:
-		// apu
+		// apu, just here to shut up logging
 		break;
 	case 0x4016:
 		if (bus->controller1) controller_write(bus->controller1, val);

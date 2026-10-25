@@ -33,16 +33,16 @@ int main(int argc, char **argv) {
 	// declare components
 	Controller controller = {0};
 	PPU ppu = { .cart = &cart };
-	APU apu;
 	Bus bus = {
 		.cart = &cart,
 		.ppu = &ppu,
-		.apu = &apu,
 		.controller1 = &controller,
 	};
+	APU apu = { .bus = &bus };
 	CPU cpu = { .bus = &bus };
 
 	bus.cpu = &cpu;
+	bus.apu = &apu;
 
 	// init components
 	bus_init(&bus);

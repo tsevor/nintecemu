@@ -7,7 +7,6 @@
 #include "bus.h"
 #include "host.h"
 
-
 typedef struct CPU {
 	// registers
 
