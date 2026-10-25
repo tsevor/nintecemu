@@ -25,7 +25,7 @@ i have made zero progress on ui so use args:
 
 ## build
 
-requirements for pc host
+requirements for gtk host
 - gtk
 - libadwaita
 
@@ -41,11 +41,16 @@ or use
 
 todo:
 - more logging everywhere
-- mappers
+- more mappers
 	- mmc3
 - apu
-- good ui (first one will be a bad one)
-- get it running on a calculator
-	- i will segment host.c entirely so it
-	  is the only thing interacting with the
-	  device io (screen, controller state, etc)
+- hosts
+  - gtk host
+    - add gui for cool features
+    - maybe debugger?
+    - at least some more options like that
+  - sdl3 host
+    - simple and fast
+    - low on features
+  - calculator host??
+    - ti nspire cx ii cas
