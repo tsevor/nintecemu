@@ -59,8 +59,3 @@ uint8_t cart_mirror_nt(Cart *cart, int nt_idx);
 void cart_reset(Cart *cart);
 bool cart_irq_active(Cart *cart);
 void cart_scanline(Cart *cart);
-
-// include all mappers here
-
-#include "mappers/NROM.h" // 0
-#include "mappers/AxROM.h" // 7

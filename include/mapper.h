@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+typedef struct Cart Cart;
 typedef struct MapperInterface MapperInterface;
 
 typedef struct MapperInterface {
@@ -20,5 +21,12 @@ typedef struct MapperInterface {
 
 	void (*free)(MapperInterface *mi);
 
+	Cart *cart;
+
 	void *mapper_struct;
 } MapperInterface;
+
+#include "cart.h"
+
+void m_NROM_init(MapperInterface *mi, Cart *cart); // 0
+void m_AxROM_init(MapperInterface *mi, Cart *cart); // 7
