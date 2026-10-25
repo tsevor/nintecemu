@@ -60,8 +60,8 @@ int main(int argc, char **argv) {
 		while (host_get_event(&e)) {
 			switch (e.type) {
 			case E_RESET:
-				cpu_reset(&cpu);
-				host_send_info(I_INFO, "reset cpu");
+				bus_reset(&bus);
+				host_send_info(I_INFO, "reset system");
 				break;
 			default:
 				break;

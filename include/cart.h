@@ -5,6 +5,7 @@
 
 #include "host.h"
 #include "log.h"
+#include "mapper.h"
 
 #define PRG_BANK_SIZE 0x4000
 #define CHR_BANK_SIZE 0x2000
@@ -17,7 +18,7 @@ typedef enum MirrorType {
 	MIRROR_FOUR_SCREEN
 } MirrorType;
 
-typedef struct {
+typedef struct Cart {
 	uint8_t header[16];
 	int ines_version;
 
@@ -29,7 +30,7 @@ typedef struct {
 	uint8_t *prg_banks;
 	uint8_t *chr_banks;
 
-	int mapper;
+	int mapperid;
 
 	bool four_screen;
 	bool has_trainer;
@@ -39,6 +40,8 @@ typedef struct {
 	MirrorType mirroring;
 
 	int trainer_size;
+
+	MapperInterface mapper;
 
 } Cart;
 
@@ -52,3 +55,10 @@ uint8_t cart_read_chr(Cart *cart, uint16_t addr);
 void cart_write_chr(Cart *cart, uint16_t addr, uint8_t val);
 
 uint8_t cart_mirror_nt(Cart *cart, int nt_idx);
+
+void cart_reset(Cart *cart);
+
+// include all mappers here
+
+#include "mappers/NROM.h" // 0
+#include "mappers/AxROM.h" // 7

@@ -14,6 +14,11 @@ void bus_clock(Bus *bus) {
 	}
 }
 
+void bus_reset(Bus *bus) {
+	cart_reset(bus->cart);
+	cpu_reset(bus->cpu);
+}
+
 uint8_t bus_read(Bus *bus, uint16_t addr) {
 	switch (addr) {
 	case 0x0000 ... 0x1fff:
@@ -51,7 +56,7 @@ uint8_t bus_read(Bus *bus, uint16_t addr) {
 		if (bus->controller2)
 			bus->open_bus = (controller_read(bus->controller2) & ~0x01) | (bus->open_bus & 0x01);
 		break;
-	case 0x8000 ... 0xffff:
+	case 0x6000 ... 0xffff:
 		bus->open_bus = cart_read_prg(bus->cart, addr);
 		break;
 	default:
@@ -112,7 +117,7 @@ void bus_write(Bus *bus, uint16_t addr, uint8_t val) {
 		if (bus->controller1) controller_write(bus->controller1, val);
 		if (bus->controller2) controller_write(bus->controller2, val);
 		break;
-	case 0x8000 ... 0xffff:
+	case 0x6000 ... 0xffff:
 		cart_write_prg(bus->cart, addr, val);
 		break;
 	default:

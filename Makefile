@@ -1,12 +1,12 @@
 CC = gcc
-CFLAGS += -Wall -Werror -Wextra -O3 -MMD -MP -flto -Iinclude $(shell pkg-config --cflags gtk4 libadwaita-1)
+CFLAGS += -g -Wall -Werror -Wextra -O3 -MMD -MP -flto -Iinclude $(shell pkg-config --cflags gtk4 libadwaita-1)
 LDFLAGS += $(shell pkg-config --libs gtk4 libadwaita-1)
 
 ARGS = "roms/AccuracyCoin.nes"
 
 TARGET = bin/nintecemu
 
-SRCS = $(wildcard src/*.c)
+SRCS = $(shell find src -name '*.c')
 OBJS = $(SRCS:src/%.c=obj/%.o)
 DEPS = $(OBJS:.o=.d)
 
@@ -14,18 +14,13 @@ DEPS = $(OBJS:.o=.d)
 
 all: $(TARGET)
 
-$(TARGET): $(OBJS) | bin
-	@mkdir -p bin
-	@mkdir -p obj
+$(TARGET): $(OBJS)
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET) $(LDFLAGS)
 
-obj/%.o: src/%.c | obj
-	@mkdir -p bin
-	@mkdir -p obj
+obj/%.o: src/%.c
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
-
-bin obj:
-	@mkdir -p $@
 
 run: $(TARGET)
 	./$(TARGET) $(ARGS)

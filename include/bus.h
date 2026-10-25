@@ -33,6 +33,8 @@ typedef struct Bus {
 
 void bus_init(Bus *bus);
 
+void bus_reset(Bus *bus);
+
 void bus_clock(Bus *bus);
 
 uint8_t bus_read(Bus *bus, uint16_t addr);

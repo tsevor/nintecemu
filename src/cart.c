@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+bool cart_pick_mapper(Cart *cart);
+
 int cart_load(Cart *cart, const char *filename) {
 	linfo("load_cart: filename=\"%s\"\n", filename);
 
@@ -43,11 +45,10 @@ int cart_load(Cart *cart, const char *filename) {
 	uint8_t flags6 = cart->header[6];
 	uint8_t flags7 = cart->header[7];
 
-	cart->mapper = (flags7 & 0xf0) | (flags6 & 0xf0) >> 4;
+	cart->mapperid = (flags7 & 0xf0) | (flags6 & 0xf0) >> 4;
 
-	// temporary until mappers are properly implemented
-	if (cart->mapper != 0) {
-		lerror("load_cart: mapper not supported: %d\n", cart->mapper);
+	if (!cart_pick_mapper(cart)) {
+		lerror("load_cart: mapper not supported: %d\n", cart->mapperid);
 		fclose(file);
 		return 1;
 	}
@@ -97,6 +98,8 @@ int cart_load(Cart *cart, const char *filename) {
 	} else {
 		// chr-ram if count is 0
 		cart->chr_banks = malloc(CHR_BANK_SIZE);
+		for (int i = 0; i < CHR_BANK_SIZE; i++)
+			cart->chr_banks[i] = 0;
 	}
 
 	fclose(file);
@@ -107,41 +110,47 @@ int cart_load(Cart *cart, const char *filename) {
 }
 
 void cart_free(Cart *cart) {
+	cart->mapper.free(&cart->mapper);
 	if (cart->prg_banks) free(cart->prg_banks);
 	if (cart->chr_banks) free(cart->chr_banks);
 	cart->prg_banks = NULL;
 	cart->chr_banks = NULL;
 }
 
+void cart_reset(Cart *cart) {
+	linfo("reset cart\n");
+	cart->mapper.reset(&cart->mapper);
+}
 
-// todo: replace these to be dynamic with mappers
 uint8_t cart_read_prg(Cart *cart, uint16_t addr) {
-	return cart->prg_banks[cart->prg_banks_count == 1 ? (addr - 0x8000) & 0x3fff : addr - 0x8000];
+	return cart->mapper.read_prg(&cart->mapper, addr);
 }
 
 void cart_write_prg(Cart *cart, uint16_t addr, uint8_t val) {
-	(void)cart;
-	(void)addr;
-	(void)val;
-	// cart->prg_banks[addr - 0x8000] = val;
+	cart->mapper.write_prg(&cart->mapper, addr, val);
 }
 
 uint8_t cart_read_chr(Cart *cart, uint16_t addr) {
-	return cart->chr_banks[addr];
+	return cart->mapper.read_chr(&cart->mapper, addr);
 }
 
 void cart_write_chr(Cart *cart, uint16_t addr, uint8_t val) {
-	if (cart->chr_banks_count == 0) {
-		cart->chr_banks[addr & 0x1fff] = val;
-	}
+	cart->mapper.write_chr(&cart->mapper, addr, val);
 }
 
 uint8_t cart_mirror_nt(Cart *cart, int nt_idx) {
-	static const uint8_t lut[3][4] = {
-		// nametable            0  1  2  3
-		[MIRROR_HORIZONTAL]  = {0, 0, 2, 2},
-		[MIRROR_VERTICAL]    = {0, 1, 0, 1},
-		[MIRROR_FOUR_SCREEN] = {0, 1, 2, 3}
-	};
-	return lut[cart->mirroring][nt_idx];
+	return cart->mapper.mirror_nt(&cart->mapper, nt_idx);
+}
+
+bool cart_pick_mapper(Cart *cart) {
+	switch (cart->mapperid) {
+		case 0: // NROM
+			m_NROM_init(&cart->mapper, cart);
+			return true;
+		case 7: // NROM
+			m_AxROM_init(&cart->mapper, cart);
+			return true;
+		default:
+			return false;
+	}
 }
