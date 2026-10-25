@@ -143,22 +143,18 @@ int host_init() {
 
 	adw_init();
 
-	lhost("gtk: create window\n");
 	host.window = gtk_window_new();
 	gtk_window_set_title(GTK_WINDOW(host.window), "nintecemu");
 	gtk_window_set_default_size(GTK_WINDOW(host.window), NES_WIDTH * 2, NES_HEIGHT * 2);
 	g_signal_connect(host.window, "close-request", G_CALLBACK(on_window_close), NULL);
 
-	lhost("gtk: create canvas\n");
 	host.canvas = gtk_drawing_area_new();
 	gtk_drawing_area_set_draw_func(GTK_DRAWING_AREA(host.canvas), on_draw, NULL, NULL);
 
-	lhost("gtk: create toast overlay\n");
 	host.toast = adw_toast_overlay_new();
 	adw_toast_overlay_set_child(ADW_TOAST_OVERLAY(host.toast), host.canvas);
 	gtk_window_set_child(GTK_WINDOW(host.window), host.toast);
 
-	lhost("gtk: create event controller\n");
 	GtkEventController *key_ctrl = gtk_event_controller_key_new();
 	g_signal_connect(key_ctrl, "key-pressed", G_CALLBACK(on_key_pressed), NULL);
 	g_signal_connect(key_ctrl, "key-released", G_CALLBACK(on_key_released), NULL);
@@ -189,17 +185,17 @@ void host_exit(int code) {
 	exit(code);
 }
 
-void host_set_pixel(int x, int y, uint32_t color) {
-	if (x < 0 || x >= NES_WIDTH) return;
-	if (y < 0 || y >= NES_HEIGHT) return;
-	host.buffer_back[y * NES_WIDTH + x] = color;
-}
-
 void host_swap_buffer() {
 	uint32_t *temp = host.buffer_back;
 	host.buffer_back = host.buffer_front;
 	host.buffer_front = temp;
 	host_screen_buffer = host.buffer_back;
+}
+
+void host_queue_audio_buffer(int16_t *buffer, size_t len) {
+	(void)buffer;
+	(void)len;
+	// how to do in gtk?
 }
 
 void host_send_info(InfoType type, char *str) {

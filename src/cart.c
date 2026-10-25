@@ -6,17 +6,16 @@
 bool cart_pick_mapper(Cart *cart);
 
 int cart_load(Cart *cart, const char *filename) {
-	linfo("load_cart: filename=\"%s\"\n", filename);
 
 	if (!cart) {
-		lerror("load_cart: passed unallocated cart\n");
+		lerror("cart: passed unallocated cart\n");
 		return 1;
 	}
 
 	FILE *file = fopen(filename, "rb");
 
 	if (!file) {
-		lerror("load_cart: file doesn't exist\n");
+		lerror("cart: file doesn't exist\n");
 		return 1;
 	}
 
@@ -24,14 +23,14 @@ int cart_load(Cart *cart, const char *filename) {
 
 	read = fread(cart->header, 1, 16, file);
 	if (read != 16) {
-		lerror("load_cart: couldn't read file header\n");
+		lerror("cart: couldn't read file header\n");
 		fclose(file);
 		return 1;
 	}
 
 	for (int i = 0; i < 4; i++)
 		if (cart->header[i] != "NES\x1a"[i]) {
-			lerror("load_cart: file header lacks magic bytes NES\\x1a\n");
+			lerror("cart: file header lacks magic bytes NES\\x1a\n");
 			fclose(file);
 			return 1;
 		}
@@ -48,7 +47,7 @@ int cart_load(Cart *cart, const char *filename) {
 	cart->mapperid = (flags7 & 0xf0) | (flags6 & 0xf0) >> 4;
 
 	if (!cart_pick_mapper(cart)) {
-		lerror("load_cart: mapper not supported: %d\n", cart->mapperid);
+		lerror("cart: mapper not supported: %d\n", cart->mapperid);
 		fclose(file);
 		return 1;
 	}
@@ -68,7 +67,7 @@ int cart_load(Cart *cart, const char *filename) {
 	cart->ines_version = (flags7 & 0x0c) >> 2;
 
 	if (cart->ines_version == 2) {
-		lwarn("load_cart: ines 2.0 not fully supported\n");
+		lwarn("cart: ines 2.0 not fully supported\n");
 	}
 
 	if (cart->has_trainer)
@@ -78,7 +77,7 @@ int cart_load(Cart *cart, const char *filename) {
 	read = fread(cart->prg_banks, 1, cart->prg_banks_size, file);
 
 	if (read != cart->prg_banks_size){
-		lerror("load_cart: couldn't read prg banks\n");
+		lerror("cart: couldn't read prg banks\n");
 		free(cart->prg_banks);
 		fclose(file);
 		return 1;
@@ -89,7 +88,7 @@ int cart_load(Cart *cart, const char *filename) {
 		read = fread(cart->chr_banks, 1, cart->chr_banks_size, file);
 
 		if (read != cart->chr_banks_size){
-			lerror("load_cart: couldn't read chr banks\n");
+			lerror("cart: couldn't read chr banks\n");
 			free(cart->prg_banks);
 			free(cart->chr_banks);
 			fclose(file);
@@ -104,7 +103,7 @@ int cart_load(Cart *cart, const char *filename) {
 
 	fclose(file);
 
-	linfo("load_cart: completed\n");
+	linfo("cart: mapper: %d\n", cart->mapperid);
 
 	return 0;
 }
@@ -118,7 +117,6 @@ void cart_free(Cart *cart) {
 }
 
 void cart_reset(Cart *cart) {
-	linfo("reset cart\n");
 	cart->mapper.reset(&cart->mapper);
 }
 

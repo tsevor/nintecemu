@@ -1059,7 +1059,6 @@ void cpu_op_switch(CPU *cpu, uint8_t opcode) {
 }
 
 void cpu_poweron(CPU *cpu) {
-	linfo("poweron cpu\n");
 	cpu->a = 0;
 	cpu->x = 0;
 	cpu->y = 0;
@@ -1071,7 +1070,6 @@ void cpu_poweron(CPU *cpu) {
 }
 
 void cpu_reset(CPU *cpu) {
-	linfo("reset cpu\n");
 	cpu->jammed = false;
 	cpu->stall = 0;
 	cpu_interrupt(cpu, RESET);

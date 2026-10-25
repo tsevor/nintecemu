@@ -49,6 +49,9 @@ void host_exit(int code);
 // swap internal buffer with exposed one
 void host_swap_buffer();
 
+// queue 'len' samples of audio to play
+void host_queue_audio_buffer(int16_t *buffer, size_t len);
+
 // sends info for host to display
 void host_send_info(InfoType type, char *str);
 

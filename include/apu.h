@@ -8,6 +8,9 @@
 
 typedef struct APU {
 	Bus *bus;
+
+	// cycles per sample
+	int cps_counter;
 } APU;
 
 void apu_init(APU *apu);
